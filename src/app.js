@@ -5,6 +5,7 @@ import { Lighting } from './core/Lighting.js';
 import { MuseumLayout } from './procedural/MuseumLayout.js';
 import { UserInterface } from './ui/UserInterface.js';
 import { ImageSource } from './data/ImageSource.js';
+import Stats from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/libs/stats.module.js';
 
 class VirtualMuseumApp {
     constructor() {
