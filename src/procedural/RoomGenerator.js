@@ -31,8 +31,9 @@ export class RoomGenerator {
         // Generate the room using the template
         const room = templateFunction(styleConfig, size);
         
-        // Store room metadata
+        // Store room metadata WITHOUT overwriting existing userData
         room.userData = {
+            ...room.userData,  // Preserve existing userData properties
             id: `room_${this.roomCounter++}`,
             name: `${style.charAt(0).toUpperCase() + style.slice(1)} ${template.charAt(0).toUpperCase() + template.slice(1)}`,
             template,
@@ -466,6 +467,13 @@ export class RoomGenerator {
         const artworkPlacements = [];
         const walls = room.userData.walls;
         const size = room.userData.size;
+        
+        // Check if walls is defined before trying to access properties
+        if (!walls) {
+            console.warn('No walls defined for room:', room.userData.id);
+            room.userData.artworkPlacements = [];
+            return;
+        }
         
         // Artwork dimensions
         const artworkWidth = 2;

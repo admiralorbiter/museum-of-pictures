@@ -53,6 +53,7 @@ export class CameraControls {
         // Pointer lock change event
         document.addEventListener('pointerlockchange', () => {
             this.isLocked = document.pointerLockElement === this.domElement;
+            console.log('Pointer lock changed. Is locked:', this.isLocked);
         });
         
         // Mouse movement event

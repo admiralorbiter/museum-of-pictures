@@ -21,6 +21,7 @@ class VirtualMuseumApp {
         this.renderer = new Renderer(this.container);
         this.sceneManager = new SceneManager();
         this.cameraControls = new CameraControls(this.sceneManager.getCamera(), this.container);
+        this.sceneManager.getScene().add(this.cameraControls.yawObject);
         this.lighting = new Lighting(this.sceneManager.getScene());
         
         // Initialize procedural generation
@@ -32,6 +33,9 @@ class VirtualMuseumApp {
         // Initialize image source
         this.imageSource = new ImageSource();
         
+        // Set initial position
+        this.cameraControls.setPosition(new THREE.Vector3(0, this.cameraControls.playerHeight, 0));
+        
         // Set up event listeners
         this.setupEventListeners();
         
@@ -40,18 +44,70 @@ class VirtualMuseumApp {
     }
     
     async init() {
+        // Check if THREE is available
+        if (typeof THREE === 'undefined') {
+            console.error('THREE.js is not loaded!');
+            this.loadingScreen.innerHTML = '<p>Error: THREE.js library not loaded</p>';
+            return;
+        }
         // Load initial resources
         try {
+            console.log("Starting image preloading...");
             await this.imageSource.preloadImages();
+            console.log("Images preloaded successfully");
+            
+            console.log("Generating initial layout...");
             await this.museumLayout.generateInitialLayout();
+            console.log("Initial layout generated successfully");
             
             // Hide loading screen
             this.loadingScreen.classList.add('hidden');
             
+            // Add a click-to-start overlay
+            const clickToStartOverlay = document.createElement('div');
+            clickToStartOverlay.id = 'click-to-start';
+            clickToStartOverlay.innerHTML = '<div class="click-message">Click to explore the museum</div>';
+            document.body.appendChild(clickToStartOverlay);
+            
+            // Add event listener to start the experience
+            clickToStartOverlay.addEventListener('click', () => {
+                // Remove the overlay
+                clickToStartOverlay.remove();
+                
+                // Request pointer lock directly
+                this.container.requestPointerLock = this.container.requestPointerLock || 
+                                                    this.container.mozRequestPointerLock ||
+                                                    this.container.webkitRequestPointerLock;
+                this.container.requestPointerLock();
+            });
+            
             // Start animation loop
             this.animate();
+            
+            console.log("Checking renderer...");
+            try {
+                // Test render
+                this.renderer.render(
+                    this.sceneManager.getScene(),
+                    this.sceneManager.getCamera()
+                );
+                console.log("Renderer test successful");
+            } catch (error) {
+                console.error("Renderer test failed:", error);
+            }
+            
+            // Force hide loading screen with a timeout
+            setTimeout(() => {
+                console.log("Force hiding loading screen");
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.style.display = 'none';
+                }
+            }, 1000); // 1 second delay
         } catch (error) {
             console.error('Error initializing the application:', error);
+            // Display error to user
+            this.loadingScreen.innerHTML = `<p>Error loading museum: ${error.message}</p>`;
         }
     }
     
@@ -98,6 +154,7 @@ class VirtualMuseumApp {
     }
     
     animate() {
+        console.log("Animation loop started");
         this.stats.begin();
         
         // Update controls

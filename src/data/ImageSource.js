@@ -55,14 +55,42 @@ export class ImageSource {
             
             for (const image of images) {
                 if (image.url) {
-                    preloadPromises.push(this.preloadImage(image.url));
+                    // Add error handling to continue even if an image fails to load
+                    preloadPromises.push(
+                        this.preloadImage(image.url)
+                            .catch(error => {
+                                console.warn(`Skipping failed image: ${error.message}`);
+                                // Use a fallback image instead
+                                return this.useFallbackImage(image);
+                            })
+                    );
                 }
             }
         }
         
-        // Wait for all preloads to complete
-        await Promise.all(preloadPromises);
+        // Wait for all preloads to complete (including those that failed but were handled)
+        await Promise.allSettled(preloadPromises);
         console.log('Preloaded images for faster rendering');
+    }
+    
+    /**
+     * Use a fallback image when the original fails to load
+     */
+    async useFallbackImage(image) {
+        // Generate a fallback URL using local placeholders
+        const fallbackIndex = Math.floor(Math.random() * 5) + 1;
+        const fallbackUrl = `${this.localImagesPath}placeholders/artwork_${fallbackIndex}.jpg`;
+        
+        // Store the fallback in the cache
+        this.imageCache[image.url] = fallbackUrl;
+        
+        // Update the image object with the fallback URL
+        image.originalUrl = image.url;
+        image.url = fallbackUrl;
+        image.isFallback = true;
+        
+        console.log(`Using fallback image for: ${image.title}`);
+        return fallbackUrl;
     }
     
     /**
@@ -231,7 +259,7 @@ export class ImageSource {
                         description: 'Depicts elephants with elongated legs that give a dream-like appearance.',
                         year: '1948',
                         source: 'Wikimedia Commons',
-                        url: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bc/The_Elephants.jpg/1280px-The_Elephants.jpg'
+                        url: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bd/Dali_Elephants.jpg/1280px-Dali_Elephants.jpg'
                     }
                 );
                 break;
